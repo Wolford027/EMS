@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/axios";
@@ -21,6 +22,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Employees", href: "/dashboard/employees", icon: Users },
   { label: "Departments", href: "/dashboard/departments", icon: FolderKanban },
+  { label: "Payroll", href: "/dashboard/payroll", icon: HandCoins },
   { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
   { label: "Leave", href: "/dashboard/leave", icon: CalendarOff },
   { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
