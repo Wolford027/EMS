@@ -128,7 +128,7 @@ export default function DepartmentsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openAdd}>
+            <Button onClick={openAdd} className="cursor-pointer">
               <Plus className="h-4 w-4 mr-2" />
               New Department
             </Button>

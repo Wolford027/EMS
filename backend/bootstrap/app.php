@@ -23,7 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'role.owner' => \App\Http\Middleware\EnsureOwnerRole::class,
+            'role.owner'     => \App\Http\Middleware\EnsureOwnerRole::class,
+            'role.employee'  => \App\Http\Middleware\EnsureEmployeeRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

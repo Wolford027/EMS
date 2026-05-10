@@ -75,6 +75,7 @@ export default function EmployeesPage() {
   const [editTarget, setEditTarget] = useState<Employee | null>(null);
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   async function fetchEmployees() {
     try {
@@ -98,6 +99,7 @@ export default function EmployeesPage() {
   function openAdd() {
     setEditTarget(null);
     setForm(emptyForm);
+    setFormErrors({});
     setDialogOpen(true);
   }
 
@@ -110,10 +112,34 @@ export default function EmployeesPage() {
       role: emp.role,
       department_id: "",
     });
+    setFormErrors({});
     setDialogOpen(true);
   }
 
+  function validateForm(): boolean {
+    const errors: Record<string, string> = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!form.email) {
+      errors.email = "Email is required.";
+    } else if (!emailRegex.test(form.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    if (!editTarget) {
+      if (!form.password) {
+        errors.password = "Password is required.";
+      } else if (form.password.length < 8) {
+        errors.password = "Password must be at least 8 characters.";
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   async function handleSave() {
+    if (!validateForm()) return;
     setSaving(true);
     try {
       if (editTarget) {
@@ -123,8 +149,21 @@ export default function EmployeesPage() {
       }
       setDialogOpen(false);
       fetchEmployees();
-    } catch {
-      /* silent */
+    } catch (err: unknown) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        (err as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } }).response?.status === 422
+      ) {
+        const serverErrors =
+          (err as { response: { data: { errors: Record<string, string[]> } } }).response.data.errors ?? {};
+        const mapped: Record<string, string> = {};
+        for (const [field, messages] of Object.entries(serverErrors)) {
+          mapped[field] = messages[0];
+        }
+        setFormErrors(mapped);
+      }
     } finally {
       setSaving(false);
     }
@@ -159,9 +198,9 @@ export default function EmployeesPage() {
             Manage your team members and their details.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setFormErrors({}); }}>
           <DialogTrigger asChild>
-            <Button onClick={openAdd}>
+            <Button onClick={openAdd} className="cursor-pointer">
               <UserPlus className="h-4 w-4 mr-2" />
               Add Employee
             </Button>
@@ -187,26 +226,42 @@ export default function EmployeesPage() {
                 <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Email
                 </label>
-                <Input
-                  type="email"
-                  placeholder="john@company.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
+                <div className="pb-px">
+                  <Input
+                    type="email"
+                    placeholder="john@company.com"
+                    value={form.email}
+                    className={formErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: "" }));
+                    }}
+                  />
+                </div>
+                {formErrors.email && (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
+                )}
               </div>
               {!editTarget && (
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
                     Password
                   </label>
-                  <Input
-                    type="password"
-                    placeholder="Temporary password"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                  />
+                  <div className="pb-px">
+                    <Input
+                      type="password"
+                      placeholder="Temporary password (min. 8 characters)"
+                      value={form.password}
+                      className={formErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      onChange={(e) => {
+                        setForm({ ...form, password: e.target.value });
+                        if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: "" }));
+                      }}
+                    />
+                  </div>
+                  {formErrors.password && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>
+                  )}
                 </div>
               )}
               <div>

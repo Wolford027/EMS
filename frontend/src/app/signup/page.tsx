@@ -241,7 +241,7 @@ export default function SignupPage() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full mt-1" disabled={isSubmitting}>
+                <Button type="submit" className="w-full mt-1 cursor-pointer" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create account
                 </Button>

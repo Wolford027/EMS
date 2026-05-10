@@ -39,8 +39,13 @@ export default function LoginPage() {
     setServerError(null);
     try {
       const res = await api.post("/login", data);
-      setUser(res.data.user);
-      router.push("/dashboard");
+      const loggedInUser = res.data.user;
+      setUser(loggedInUser);
+      if (loggedInUser.role === "owner") {
+        router.push("/dashboard");
+      } else {
+        router.push("/employee-dashboard");
+      }
     } catch (err: unknown) {
       const message =
         err && typeof err === "object" && "response" in err
@@ -122,20 +127,12 @@ export default function LoginPage() {
 
                 {/* Password */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="password"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Password
-                    </label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Password
+                  </label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -165,12 +162,17 @@ export default function LoginPage() {
                       )}
                     </button>
                   </div>
+                  <div className="flex justify-end">
+                    <Link href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
                   {errors.password && (
                     <p className="text-xs text-red-500">{errors.password.message}</p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign in
                 </Button>
