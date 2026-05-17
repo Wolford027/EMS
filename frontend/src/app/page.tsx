@@ -57,7 +57,7 @@ export default function Home() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-28 px-4">
+      <section className="relative overflow-hidden bg-linear-to-b from-blue-50 to-white py-28 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
             <CheckCircle2 className="h-4 w-4" />

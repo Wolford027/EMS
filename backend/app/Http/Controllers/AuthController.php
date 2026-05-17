@@ -42,7 +42,7 @@ class AuthController extends Controller
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return response()->json([
-                'message' => 'Invalid credentials. Please try again.',
+                'message' => 'The email or password you entered is incorrect. Please try again.',
             ], 401);
         }
 

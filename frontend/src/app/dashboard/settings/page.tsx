@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Settings,
   User,
+  Users,
   Lock,
   Bell,
   HandCoins,
@@ -43,7 +44,7 @@ import {
 import { api } from "@/lib/axios";
 import { useAuthStore } from "@/store/auth-store";
 
-type Tab = "profile" | "password" | "notifications" | "payroll_variables";
+type Tab = "profile" | "password" | "notifications" | "payroll_variables" | "employee_roles";
 
 // ─── Payroll Variables types ───────────────────────────────────────────────
 type VariableType = "allowance" | "deduction" | "salary_component";
@@ -57,6 +58,12 @@ type PayrollVariable = {
   description: string | null;
   is_active: boolean;
 };
+
+type EmployeeRole = {
+  id: number;
+  name: string;
+  salary: string;
+}
 
 type VariableForm = {
   name: string;
@@ -85,6 +92,7 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "password",          label: "Password",           icon: Lock      },
   { id: "notifications",     label: "Notifications",      icon: Bell      },
   { id: "payroll_variables", label: "Payroll Variables",  icon: HandCoins },
+  { id: "employee_roles",    label: "Employee Roles",    icon: Users     },
 ];
 
 export default function SettingsPage() {
@@ -248,6 +256,9 @@ export default function SettingsPage() {
       /* silent */
     }
   }
+
+  // ─── Employee Role state ─────────────────────────────────────────────
+  const [roles, setRoles] = useState<EmployeeRole[]>([]);
 
   return (
     <div className="p-6 space-y-6">
@@ -605,6 +616,160 @@ export default function SettingsPage() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Type</TableHead>
+                        <TableHead>Default Value</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {variables.map((v) => (
+                        <TableRow key={v.id}>
+                          <TableCell className="font-medium">{v.name}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${typeConfig[v.type].classes}`}
+                            >
+                              {typeConfig[v.type].label}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            ₱{parseFloat(v.default_value).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </TableCell>
+                          <TableCell className="text-gray-500 text-sm">
+                            {v.description ?? "—"}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                v.is_active
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-gray-100 text-gray-500"
+                              }`}
+                            >
+                              {v.is_active ? "Active" : "Inactive"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditVar(v)}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => handleVarDelete(v.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Employee Roles */}
+          {activeTab === "employee_roles" && (
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>Employee Roles</CardTitle>
+                  <CardDescription>
+                    Manage the different roles and permissions for employees within the organization.
+                  </CardDescription>
+                </div>
+                <Dialog open={varDialogOpen} onOpenChange={setVarDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={openAddVar} size="sm">
+                      <Plus className="h-4 w-4 mr-1.5" /> Add Role
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editTarget ? "Edit Variable" : "Add Payroll Variable"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleVarSave} className="space-y-4 pt-2">
+                      {/* Name */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="var_name">Name</Label>
+                        <Input
+                          id="var_name"
+                          placeholder="e.g. Manager"
+                          value={varForm.name}
+                          onChange={(e) =>
+                            setVarForm((f) => ({ ...f, name: e.target.value }))
+                          }
+                          required
+                        />
+                      </div>
+                      {/* Type */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="var_type">Salary</Label>
+                        <select
+                          id="var_type"
+                          value={varForm.type}
+                          onChange={(e) =>
+                            setVarForm((f) => ({ ...f, type: e.target.value as VariableType }))
+                          }
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          required
+                        >
+                          <option value="allowance">Allowance</option>
+                          <option value="deduction">Deduction</option>
+                          <option value="salary_component">Salary Component</option>
+                        </select>
+                      </div>
+                      {varError && (
+                        <p className="text-sm text-red-600">{varError}</p>
+                      )}
+                      <Separator />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setVarDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={varSaving}>
+                          {varSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          {editTarget ? "Save Changes" : "Add Variable"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {varLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  </div>
+                ) : variables.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400 text-sm">
+                    No payroll variables yet. Click &ldquo;Add Variable&rdquo; to get started.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Role Name</TableHead>
+                        <TableHead>Salary</TableHead>
                         <TableHead>Default Value</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Status</TableHead>
